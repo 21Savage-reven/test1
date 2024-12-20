@@ -74,7 +74,7 @@
     <footer>Made with ❤️ by <strong>AKA_23Savge&Dreak</strong></footer>
 
     <script>
-        const API_URL = "https://test1-gh5c.onrender.com/generate"; // URL ของเซิร์ฟเวอร์ที่ deploy บน Render
+        const API_URL = "https://test1-j6x3.onrender.com/generate"; // URL ของเซิร์ฟเวอร์ที่ deploy บน Render
         const REFRESH_INTERVAL = 60; // ระยะเวลานับถอยหลัง (วินาที)
         let countdown = REFRESH_INTERVAL;
 
@@ -116,14 +116,14 @@
             const datetimeElement = document.getElementById("datetime");
             const options = { timeZone: "Asia/Bangkok", hour12: true, hour: "2-digit", minute: "2-digit", second: "2-digit", day: "2-digit", month: "2-digit", year: "numeric" };
             const currentTime = new Date().toLocaleString("th-TH", options);
-            datetimeElement.textContent = `เวลาปัจจุบัน: ${currentTime}`;
+            datetimeElement.textContent = เวลาปัจจุบัน: ${currentTime};
         }
 
         function startCountdown() {
             const countdownElement = document.getElementById("countdown");
             const interval = setInterval(() => {
                 countdown--;
-                countdownElement.textContent = `QR Code จะรีเซ็ตในอีก ${countdown} วินาที`;
+                countdownElement.textContent = QR Code จะรีเซ็ตในอีก ${countdown} วินาที;
 
                 if (countdown <= 0) {
                     clearInterval(interval);
