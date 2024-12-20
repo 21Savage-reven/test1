@@ -1,23 +1,21 @@
 from flask import Flask, request, jsonify, redirect
 from flask_cors import CORS  # เปิดใช้ CORS
 import time
-import os  # สำหรับการดึง environment variables
+import os  # สำหรับอ่านค่า environment variables
 
 app = Flask(__name__)
 CORS(app)  # เปิดใช้งาน CORS สำหรับแอปทั้งหมด
 
-# ค่าเริ่มต้นสำหรับ URL เป้าหมาย
-current_target = "https://docs.google.com/forms/d/e/1FAIpQLSeGxUnI8PAfHhFT583EaSjkvmIdRw0nxZFJ2yaKCceZbD6FDQ/viewform"
+# อ่านค่าจาก environment variables หรือใช้ค่า default
+TOKEN_EXPIRY_TIME = int(os.environ.get("TOKEN_EXPIRY_TIME", 60))  # ค่า default คือ 60 วินาที
+
+current_target = "https://docs.google.com/forms/d/e/1FAIpQLSeGxUnI8PAfHhFT583EaSjkvmIdRw0nxZFJ2yaKCceZbD6FDQ/viewform"  # URL เริ่มต้น
 valid_tokens = {}
-
-TOKEN_EXPIRY_TIME = 60  # กำหนดเวลาให้ QR Code หมดอายุภายใน 1 นาที
-
 
 # Route สำหรับหน้าเริ่มต้น (สำหรับการทดสอบ)
 @app.route('/')
 def index():
     return "Hello, Welcome to QR Code App!"
-
 
 @app.route('/generate', methods=['POST'])
 def generate_qr():
@@ -33,12 +31,10 @@ def generate_qr():
     current_target = new_target
 
     # ส่ง URL ใหม่ที่รวมกับ token
-    base_url = request.host_url.rstrip('/')  # รับ host URL โดยอัตโนมัติ
     return jsonify({
-        "qr_url": f"{base_url}/redirect?token={token}",
+        "qr_url": f"http://127.0.0.1:5000/redirect?token={token}",
         "message": "QR Code ใหม่ถูกสร้างเรียบร้อยแล้ว"
     })
-
 
 @app.route('/redirect', methods=['GET'])
 def redirect_to_target():
@@ -51,7 +47,6 @@ def redirect_to_target():
             del valid_tokens[token]  # ลบ token ที่หมดอายุออกจาก valid_tokens
             return render_expired_page()  # เรียกใช้ฟังก์ชันแสดงหน้าเมื่อหมดอายุ
     return render_expired_page()  # หากไม่พบ token ในระบบ
-
 
 def render_expired_page():
     """ฟังก์ชันสำหรับสร้างหน้า HTML เมื่อ QR Code หมดอายุ"""
@@ -102,12 +97,10 @@ def render_expired_page():
     </head>
     <body>
        <h1>QR Code นี้หมดอายุ</h1>
-        <p>โปรดสแกนใหม่อีกครั้ง</p>
+        <p>โปรดสเเกนใหม่อีกครั้ง</p>
     </body>
     </html>
     """, 403
 
-
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))  # ใช้พอร์ตจาก environment variable หรือดีฟอลต์เป็น 5000
-    app.run(host="0.0.0.0", port=port, debug=True)
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)), debug=True)
