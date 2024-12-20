@@ -1,22 +1,103 @@
-from flask import Flask, request, jsonify, redirect
-from flask_cors import CORS  # เปิดใช้ CORS
+from flask import Flask, request, jsonify, redirect, render_template_string
+from flask_cors import CORS
 import time
-import os  # สำหรับอ่านค่า environment variables
+import os
 
 app = Flask(__name__)
-CORS(app)  # เปิดใช้งาน CORS สำหรับแอปทั้งหมด
+CORS(app)
 
-# อ่านค่าจาก environment variables หรือใช้ค่า default
-TOKEN_EXPIRY_TIME = int(os.environ.get("TOKEN_EXPIRY_TIME", 60))  # ค่า default คือ 60 วินาที
-
-current_target = "https://docs.google.com/forms/d/e/1FAIpQLSeGxUnI8PAfHhFT583EaSjkvmIdRw0nxZFJ2yaKCceZbD6FDQ/viewform"  # URL เริ่มต้น
+TOKEN_EXPIRY_TIME = int(os.environ.get("TOKEN_EXPIRY_TIME", 60))  # ค่าเริ่มต้นคือ 60 วินาที
+current_target = "https://docs.google.com/forms/d/e/1FAIpQLSeGxUnI8PAfHhFT583EaSjkvmIdRw0nxZFJ2yaKCceZbD6FDQ/viewform"
 valid_tokens = {}
 
-# Route สำหรับหน้าเริ่มต้น (สำหรับการทดสอบ)
+# HTML Template
+INDEX_HTML = """
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Code Google Form</title>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+    <style>
+        /* CSS ที่กำหนดไว้ */
+        body { ... }
+        h1 { ... }
+        #qrcode-container { ... }
+        p#datetime { ... }
+        p { ... }
+        footer { ... }
+        #countdown { ... }
+    </style>
+</head>
+<body>
+    <h1>QR Code สำหรับเช็คชื่อ</h1>
+    <p id="datetime">เวลาปัจจุบัน: กำลังโหลด...</p>
+    <div id="qrcode-container">
+        <img id="qrcode-img" alt="กำลังโหลด QR Code...">
+    </div>
+    <p id="countdown">QR Code จะรีเซ็ตในอีก 60 วินาที</p>
+    <footer>Made with ❤️ by <strong>AKA_23Savge&Dreak</strong></footer>
+
+    <script>
+        const API_URL = "/generate"; // ใช้ endpoint ในแอป Flask
+        const REFRESH_INTERVAL = 60; // ระยะเวลานับถอยหลัง (วินาที)
+        let countdown = REFRESH_INTERVAL;
+
+        async function fetchQRCode() {
+            try {
+                const response = await fetch(API_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ new_target: "{{ current_target }}" })
+                });
+
+                if (!response.ok) throw new Error("ไม่สามารถสร้าง QR Code ได้");
+
+                const data = await response.json();
+                return data.qr_url;
+            } catch (error) {
+                console.error("Error fetching QR Code:", error);
+                alert("เกิดข้อผิดพลาดในการสร้าง QR Code");
+                return null;
+            }
+        }
+
+        function updateDatetime() {
+            const datetimeElement = document.getElementById("datetime");
+            const options = { timeZone: "Asia/Bangkok", hour12: true, hour: "2-digit", minute: "2-digit", second: "2-digit", day: "2-digit", month: "2-digit", year: "numeric" };
+            const currentTime = new Date().toLocaleString("th-TH", options);
+            datetimeElement.textContent = `เวลาปัจจุบัน: ${currentTime}`;
+        }
+
+        function startCountdown() {
+            const countdownElement = document.getElementById("countdown");
+            const interval = setInterval(() => {
+                countdown--;
+                countdownElement.textContent = `QR Code จะรีเซ็ตในอีก ${countdown} วินาที`;
+
+                if (countdown <= 0) {
+                    clearInterval(interval);
+                    countdown = REFRESH_INTERVAL;
+                    fetchQRCode();
+                    startCountdown();
+                }
+            }, 1000);
+        }
+
+        fetchQRCode();
+        startCountdown();
+        setInterval(updateDatetime, 1000);
+    </script>
+</body>
+</html>
+"""
+
 @app.route('/')
 def index():
-    return "Hello, Welcome to QR Code App!"
+    return render_template_string(INDEX_HTML, current_target=current_target)
 
+# Endpoint สำหรับ Generate QR Code
 @app.route('/generate', methods=['POST'])
 def generate_qr():
     global current_target, valid_tokens
@@ -25,14 +106,12 @@ def generate_qr():
     if not new_target:
         return jsonify({"error": "กรุณาระบุ URL เป้าหมาย"}), 400
 
-    # สร้าง token ใหม่ทุกครั้งที่มีการอัปเดต URL
     token = str(int(time.time()))
-    valid_tokens[token] = new_target  # เก็บ URL ใหม่ที่เกี่ยวข้องกับ token
+    valid_tokens[token] = new_target
     current_target = new_target
 
-    # ส่ง URL ใหม่ที่รวมกับ token
     return jsonify({
-        "qr_url": f"http://127.0.0.1:5000/redirect?token={token}",
+        "qr_url": f"/redirect?token={token}",
         "message": "QR Code ใหม่ถูกสร้างเรียบร้อยแล้ว"
     })
 
@@ -40,67 +119,13 @@ def generate_qr():
 def redirect_to_target():
     token = request.args.get('token')
     if token in valid_tokens:
-        # ตรวจสอบว่า token หมดอายุหรือไม่
         if time.time() - float(token) < TOKEN_EXPIRY_TIME:
-            return redirect(valid_tokens[token])  # หาก token ยังไม่หมดอายุ ก็จะ redirect ไปที่ URL ที่เกี่ยวข้อง
+            return redirect(valid_tokens[token])
         else:
-            del valid_tokens[token]  # ลบ token ที่หมดอายุออกจาก valid_tokens
-            return render_expired_page()  # เรียกใช้ฟังก์ชันแสดงหน้าเมื่อหมดอายุ
-    return render_expired_page()  # หากไม่พบ token ในระบบ
+            del valid_tokens[token]
+            return "QR Code หมดอายุ", 403
+    return "QR Code ไม่ถูกต้อง", 403
 
-def render_expired_page():
-    """ฟังก์ชันสำหรับสร้างหน้า HTML เมื่อ QR Code หมดอายุ"""
-    return """
-    <!DOCTYPE html>
-    <html lang="th">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>QR Code หมดอายุ</title>
-        <style>
-            body {
-                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-                background-color: #f9f9f9;
-                color: #333;
-                margin: 0;
-                padding: 0;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
-                height: 100vh;
-                text-align: center;
-            }
-            h1 {
-                color: #E74C3C;
-                margin-bottom: 20px;
-            }
-            p {
-                font-size: 18px;
-                color: #555;
-            }
-            a {
-                margin-top: 20px;
-                display: inline-block;
-                padding: 10px 20px;
-                font-size: 16px;
-                color: #fff;
-                background-color: #3498DB;
-                border-radius: 5px;
-                text-decoration: none;
-                transition: background-color 0.3s ease;
-            }
-            a:hover {
-                background-color: #2980B9;
-            }
-        </style>
-    </head>
-    <body>
-       <h1>QR Code นี้หมดอายุ</h1>
-        <p>โปรดสเเกนใหม่อีกครั้ง</p>
-    </body>
-    </html>
-    """, 403
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)), debug=True)
