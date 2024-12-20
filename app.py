@@ -170,13 +170,17 @@ def generate_qr():
     if not new_target:
         return jsonify({"error": "กรุณาระบุ URL เป้าหมาย"}), 400
 
-    # สร้าง token ใหม่จากเวลา
+    # กำหนด URL ที่ต้องการให้ไป
+    target_url = "https://docs.google.com/forms/d/e/1FAIpQLSeGxUnI8PAfHhFT583EaSjkvmIdRw0nxZFJ2yaKCceZbD6FDQ/viewform"
+    
+    # สร้าง token จากเวลา
     token = str(int(time.time()))
-    valid_tokens[token] = new_target
-    current_target = new_target
+    valid_tokens[token] = target_url
+    current_target = target_url
 
-    # สร้าง URL สำหรับ QR Code
     qr_url = f"/redirect?token={token}"
+
+    print(f"Generated QR URL: {qr_url}")  # Debug: ตรวจสอบ URL QR Code ที่สร้าง
 
     return jsonify({
         "qr_url": qr_url,
@@ -187,11 +191,10 @@ def generate_qr():
 def redirect_to_target():
     token = request.args.get('token')
     if token in valid_tokens:
-        # ตรวจสอบว่า token หมดอายุหรือไม่
         if time.time() - float(token) < TOKEN_EXPIRY_TIME:
-            return redirect(valid_tokens[token])  # เปลี่ยนไปยัง URL ที่เก็บไว้
+            print(f"Redirecting to: {valid_tokens[token]}")  # Debug: ตรวจสอบ URL ที่จะไป
+            return redirect(valid_tokens[token])  # เปลี่ยนเส้นทางไปยัง URL ที่กำหนด
         else:
-            # ลบ token ที่หมดอายุ
             del valid_tokens[token]
             return "QR Code หมดอายุ", 403
     return "QR Code ไม่ถูกต้อง", 403
