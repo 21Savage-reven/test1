@@ -1,11 +1,13 @@
 from flask import Flask, request, jsonify, redirect
 from flask_cors import CORS  # เปิดใช้ CORS
 import time
+import os  # สำหรับการดึง environment variables
 
 app = Flask(__name__)
 CORS(app)  # เปิดใช้งาน CORS สำหรับแอปทั้งหมด
 
-current_target = "https://docs.google.com/forms/d/e/1FAIpQLSeGxUnI8PAfHhFT583EaSjkvmIdRw0nxZFJ2yaKCceZbD6FDQ/viewform"  # URL เริ่มต้น
+# ค่าเริ่มต้นสำหรับ URL เป้าหมาย
+current_target = "https://docs.google.com/forms/d/e/1FAIpQLSeGxUnI8PAfHhFT583EaSjkvmIdRw0nxZFJ2yaKCceZbD6FDQ/viewform"
 valid_tokens = {}
 
 TOKEN_EXPIRY_TIME = 60  # กำหนดเวลาให้ QR Code หมดอายุภายใน 1 นาที
@@ -31,8 +33,9 @@ def generate_qr():
     current_target = new_target
 
     # ส่ง URL ใหม่ที่รวมกับ token
+    base_url = request.host_url.rstrip('/')  # รับ host URL โดยอัตโนมัติ
     return jsonify({
-        "qr_url": f"http://127.0.0.1:5000/redirect?token={token}",
+        "qr_url": f"{base_url}/redirect?token={token}",
         "message": "QR Code ใหม่ถูกสร้างเรียบร้อยแล้ว"
     })
 
@@ -99,12 +102,12 @@ def render_expired_page():
     </head>
     <body>
        <h1>QR Code นี้หมดอายุ</h1>
-        <p>โปรดสเเกนใหม่อีกครั้ง</p>
-
+        <p>โปรดสแกนใหม่อีกครั้ง</p>
     </body>
     </html>
     """, 403
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 5000))  # ใช้พอร์ตจาก environment variable หรือดีฟอลต์เป็น 5000
+    app.run(host="0.0.0.0", port=port, debug=True)
