@@ -1,12 +1,11 @@
-from flask import Flask, request, jsonify, redirect, render_template_string
+from flask import Flask, request, jsonify, render_template_string
 from flask_cors import CORS
-import time
 import os
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})  # Allow all origins (or specify domains)
 
-# เวลาหมดอายุของ token (60 วินาที) สามารถลบได้หากไม่ต้องการ
+# เวลาหมดอายุของ token (60 วินาที)
 TOKEN_EXPIRY_TIME = int(os.environ.get("TOKEN_EXPIRY_TIME", 60))  # ค่าเริ่มต้นคือ 60 วินาที
 current_target = "https://docs.google.com/forms/d/e/1FAIpQLSeGxUnI8PAfHhFT583EaSjkvmIdRw0nxZFJ2yaKCceZbD6FDQ/viewform"
 valid_tokens = {}
@@ -93,6 +92,7 @@ INDEX_HTML = """
         const REFRESH_INTERVAL = 60; // ระยะเวลานับถอยหลัง (วินาที)
         let countdown = REFRESH_INTERVAL;
 
+        // ฟังก์ชันสำหรับดึง URL ของ QR Code จาก API
         async function fetchQRCode() {
             try {
                 const response = await fetch(API_URL, {
@@ -112,6 +112,7 @@ INDEX_HTML = """
             }
         }
 
+        // ฟังก์ชันสำหรับรีเฟรช QR Code
         async function refreshQRCode() {
             const qrUrl = await fetchQRCode();
             if (qrUrl) {
@@ -127,6 +128,7 @@ INDEX_HTML = """
             }
         }
 
+        // ฟังก์ชันสำหรับอัพเดตเวลา
         function updateDatetime() {
             const datetimeElement = document.getElementById("datetime");
             const options = { timeZone: "Asia/Bangkok", hour12: true, hour: "2-digit", minute: "2-digit", second: "2-digit", day: "2-digit", month: "2-digit", year: "numeric" };
@@ -134,6 +136,7 @@ INDEX_HTML = """
             datetimeElement.textContent = `เวลาปัจจุบัน: ${currentTime}`;
         }
 
+        // ฟังก์ชันสำหรับการนับถอยหลัง
         function startCountdown() {
             const countdownElement = document.getElementById("countdown");
             const interval = setInterval(() => {
@@ -141,14 +144,13 @@ INDEX_HTML = """
                 countdownElement.textContent = `QR Code จะรีเซ็ตในอีก ${countdown} วินาที`;
 
                 if (countdown <= 0) {
-                    clearInterval(interval);
                     countdown = REFRESH_INTERVAL; // รีเซ็ตเวลานับถอยหลัง
                     refreshQRCode(); // รีเฟรช QR Code ใหม่
-                    startCountdown(); // เริ่มต้นการนับถอยหลังใหม่
                 }
-            }, 1000);
+            }, 1000);  // รีเฟรชทุกๆ 1 วินาที
         }
 
+        // เรียกฟังก์ชันต่างๆ
         refreshQRCode(); // สร้าง QR Code ทันทีเมื่อเปิดหน้าเว็บ
         startCountdown(); // เริ่มต้นการนับถอยหลัง
         setInterval(updateDatetime, 1000); // อัพเดตเวลาไทยทุกวินาที
@@ -171,8 +173,8 @@ def generate_qr():
         return jsonify({"error": "กรุณาระบุ URL เป้าหมาย"}), 400
 
     # กำหนด URL ที่ต้องการให้ไป
-    target_url = "https://docs.google.com/forms/d/e/1FAIpQLSeGxUnI8PAfHhFT583EaSjkvmIdRw0nxZFJ2yaKCceZbD6FDQ/viewform"
-    
+    target_url = new_target  # ใช้ URL ที่มาจาก request
+
     # สร้าง QR Code ที่ไปยัง URL ของ Google Form โดยตรง
     qr_url = target_url  # ไม่ต้องใช้ token ในที่นี้
 
