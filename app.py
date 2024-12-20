@@ -168,7 +168,7 @@ def generate_qr():
 
     new_target = request.json.get('new_target')
     if not new_target:
-        return jsonify({"error": "กรุณาระบุ URL เป้าหมาย"}), 400
+        return jsonify({"error": "https://docs.google.com/forms/d/e/1FAIpQLSeGxUnI8PAfHhFT583EaSjkvmIdRw0nxZFJ2yaKCceZbD6FDQ/viewform"}), 400
 
     # กำหนด URL ที่ต้องการให้ไป
     target_url = "https://docs.google.com/forms/d/e/1FAIpQLSeGxUnI8PAfHhFT583EaSjkvmIdRw0nxZFJ2yaKCceZbD6FDQ/viewform"
