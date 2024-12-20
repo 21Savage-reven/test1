@@ -6,6 +6,7 @@ import os
 app = Flask(__name__)
 CORS(app)
 
+# เวลาหมดอายุของ token (60 วินาที)
 TOKEN_EXPIRY_TIME = int(os.environ.get("TOKEN_EXPIRY_TIME", 60))  # ค่าเริ่มต้นคือ 60 วินาที
 current_target = "https://docs.google.com/forms/d/e/1FAIpQLSeGxUnI8PAfHhFT583EaSjkvmIdRw0nxZFJ2yaKCceZbD6FDQ/viewform"
 valid_tokens = {}
@@ -169,6 +170,7 @@ def generate_qr():
     if not new_target:
         return jsonify({"error": "กรุณาระบุ URL เป้าหมาย"}), 400
 
+    # สร้าง token ใหม่จากเวลา
     token = str(int(time.time()))
     valid_tokens[token] = new_target
     current_target = new_target
@@ -185,9 +187,11 @@ def generate_qr():
 def redirect_to_target():
     token = request.args.get('token')
     if token in valid_tokens:
+        # ตรวจสอบว่า token หมดอายุหรือไม่
         if time.time() - float(token) < TOKEN_EXPIRY_TIME:
-            return redirect(valid_tokens[token])
+            return redirect(valid_tokens[token])  # เปลี่ยนไปยัง URL ที่เก็บไว้
         else:
+            # ลบ token ที่หมดอายุ
             del valid_tokens[token]
             return "QR Code หมดอายุ", 403
     return "QR Code ไม่ถูกต้อง", 403
