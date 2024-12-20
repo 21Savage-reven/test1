@@ -103,11 +103,14 @@ INDEX_HTML = """
                 if (!response.ok) throw new Error("ไม่สามารถสร้าง QR Code ได้");
 
                 const data = await response.json();
-                return data.qr_url;
+                const qrCodeUrl = data.qr_url;
+
+                // แสดง QR Code
+                const qrCodeImg = document.getElementById("qrcode-img");
+                qrCodeImg.src = qrCodeUrl;
             } catch (error) {
                 console.error("Error fetching QR Code:", error);
                 alert("เกิดข้อผิดพลาดในการสร้าง QR Code");
-                return null;
             }
         }
 
@@ -158,8 +161,11 @@ def generate_qr():
     valid_tokens[token] = new_target
     current_target = new_target
 
+    # สร้าง URL สำหรับ QR Code
+    qr_url = f"/redirect?token={token}"
+
     return jsonify({
-        "qr_url": f"/redirect?token={token}",
+        "qr_url": qr_url,
         "message": "QR Code ใหม่ถูกสร้างเรียบร้อยแล้ว"
     })
 
@@ -173,7 +179,6 @@ def redirect_to_target():
             del valid_tokens[token]
             return "QR Code หมดอายุ", 403
     return "QR Code ไม่ถูกต้อง", 403
-
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)), debug=True)
