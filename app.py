@@ -4,7 +4,7 @@ import time
 import os
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/*": {"origins": "*"}})  # Allow all origins (or specify domains)
 
 # เวลาหมดอายุของ token (60 วินาที)
 TOKEN_EXPIRY_TIME = int(os.environ.get("TOKEN_EXPIRY_TIME", 60))  # ค่าเริ่มต้นคือ 60 วินาที
@@ -89,7 +89,7 @@ INDEX_HTML = """
     <footer>Made with ❤️ by <strong>AKA_23Savge&Dreak</strong></footer>
 
     <script>
-        const API_URL = "https://test1-gh5c.onrender.com/generate"; // URL ของเซิร์ฟเวอร์ที่ deploy บน Render
+        const API_URL = "https://test1-j6x3.onrender.com/generate"; // URL ของเซิร์ฟเวอร์ที่ deploy บน Render
         const REFRESH_INTERVAL = 60; // ระยะเวลานับถอยหลัง (วินาที)
         let countdown = REFRESH_INTERVAL;
 
@@ -171,7 +171,7 @@ def generate_qr():
         return jsonify({"error": "กรุณาระบุ URL เป้าหมาย"}), 400
 
     # กำหนด URL ที่ต้องการให้ไป
-    target_url = new_target
+    target_url = "https://docs.google.com/forms/d/e/1FAIpQLSeGxUnI8PAfHhFT583EaSjkvmIdRw0nxZFJ2yaKCceZbD6FDQ/viewform"
     
     # สร้าง token จากเวลา
     token = str(int(time.time()))
@@ -179,8 +179,6 @@ def generate_qr():
     current_target = target_url
 
     qr_url = f"/redirect?token={token}"
-
-    print(f"Generated QR URL: {qr_url}")  # Debug: ตรวจสอบ URL QR Code ที่สร้าง
 
     return jsonify({
         "qr_url": qr_url,
@@ -192,7 +190,6 @@ def redirect_to_target():
     token = request.args.get('token')
     if token in valid_tokens:
         if time.time() - float(token) < TOKEN_EXPIRY_TIME:
-            print(f"Redirecting to: {valid_tokens[token]}")  # Debug: ตรวจสอบ URL ที่จะไป
             return redirect(valid_tokens[token])  # เปลี่ยนเส้นทางไปยัง URL ที่กำหนด
         else:
             del valid_tokens[token]
