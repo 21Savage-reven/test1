@@ -20,14 +20,62 @@ INDEX_HTML = """
     <title>QR Code Google Form</title>
     <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
     <style>
-        /* CSS ที่กำหนดไว้ */
-        body { ... }
-        h1 { ... }
-        #qrcode-container { ... }
-        p#datetime { ... }
-        p { ... }
-        footer { ... }
-        #countdown { ... }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f9f9f9;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+    
+        h1 {
+            color: #4CAF50;
+            margin-bottom: 10px;
+        }
+    
+        #qrcode-container {
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-top: 10px; /* ลดระยะห่างให้น้อยลง */
+            display: inline-block;
+        }
+    
+        #qrcode-img {
+            margin-top: 20px;
+            padding: 10px;
+            width: 400px;
+            height: 400px;
+        }
+    
+        p#datetime {
+            font-size: 60px; /* ปรับขนาดฟอนต์ */
+            color: #363636;
+            margin: 5px 0; /* ลดระยะห่างระหว่างข้อความและ QR Code */
+        }
+    
+        p {
+            margin-top: 15px;
+            font-size: 25px;
+            color: #555;
+        }
+    
+        footer {
+            margin-top: 20px;
+            font-size: 18px;
+            color: #aaa;
+        }
+    
+        #countdown {
+            font-size: 18px;
+            color: #777;
+        }
     </style>
 </head>
 <body>
