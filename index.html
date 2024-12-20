@@ -29,7 +29,7 @@
             border-radius: 10px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             padding: 20px;
-            margin-top: 10px;
+            margin-top: 10px; /* ลดระยะห่างให้น้อยลง */
             display: inline-block;
         }
     
@@ -41,9 +41,9 @@
         }
     
         p#datetime {
-            font-size: 60px;
+            font-size: 60px; /* ปรับขนาดฟอนต์ */
             color: #363636;
-            margin: 5px 0;
+            margin: 5px 0; /* ลดระยะห่างระหว่างข้อความและ QR Code */
         }
     
         p {
@@ -74,8 +74,8 @@
     <footer>Made with ❤️ by <strong>AKA_23Savge&Dreak</strong></footer>
 
     <script>
-        const API_URL = "https://your-app-name.onrender.com/generate"; // เปลี่ยนเป็น URL ที่ deploy จริง
-        const REFRESH_INTERVAL = 60;
+        const API_URL = "https://test1-gh5c.onrender.com/generate"; // URL ของเซิร์ฟเวอร์ที่ deploy บน Render
+        const REFRESH_INTERVAL = 60; // ระยะเวลานับถอยหลัง (วินาที)
         let countdown = REFRESH_INTERVAL;
 
         async function fetchQRCode() {
@@ -100,8 +100,15 @@
         async function refreshQRCode() {
             const qrUrl = await fetchQRCode();
             if (qrUrl) {
-                document.getElementById("qrcode-img").src = qrUrl; // แสดง QR Code
-                console.log("QR Code สร้างเรียบร้อย");
+                QRCode.toDataURL(qrUrl, (error, dataUrl) => {
+                    if (error) {
+                        console.error("เกิดข้อผิดพลาดในการสร้าง QR Code:", error);
+                        document.getElementById("qrcode-img").alt = "ไม่สามารถโหลด QR Code ได้";
+                    } else {
+                        document.getElementById("qrcode-img").src = dataUrl;
+                        console.log("QR Code สร้างเรียบร้อย");
+                    }
+                });
             }
         }
 
@@ -120,16 +127,16 @@
 
                 if (countdown <= 0) {
                     clearInterval(interval);
-                    countdown = REFRESH_INTERVAL;
-                    refreshQRCode();
-                    startCountdown();
+                    countdown = REFRESH_INTERVAL; // รีเซ็ตเวลานับถอยหลัง
+                    refreshQRCode(); // รีเฟรช QR Code ใหม่
+                    startCountdown(); // เริ่มต้นการนับถอยหลังใหม่
                 }
             }, 1000);
         }
 
-        refreshQRCode();
-        startCountdown();
-        setInterval(updateDatetime, 1000);
+        refreshQRCode(); // สร้าง QR Code ทันทีเมื่อเปิดหน้าเว็บ
+        startCountdown(); // เริ่มต้นการนับถอยหลัง
+        setInterval(updateDatetime, 1000); // อัพเดตเวลาไทยทุกวินาที
     </script>
 </body>
 </html>
