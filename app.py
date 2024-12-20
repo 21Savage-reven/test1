@@ -88,7 +88,7 @@ INDEX_HTML = """
     <footer>Made with ❤️ by <strong>AKA_23Savge&Dreak</strong></footer>
 
     <script>
-        const API_URL = "/generate"; // ใช้ endpoint ในแอป Flask
+        const API_URL = "https://test1-gh5c.onrender.com/generate"; // URL ของเซิร์ฟเวอร์ที่ deploy บน Render
         const REFRESH_INTERVAL = 60; // ระยะเวลานับถอยหลัง (วินาที)
         let countdown = REFRESH_INTERVAL;
 
@@ -97,20 +97,32 @@ INDEX_HTML = """
                 const response = await fetch(API_URL, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ new_target: "{{ current_target }}" })
+                    body: JSON.stringify({ new_target: "https://docs.google.com/forms/d/e/1FAIpQLSeGxUnI8PAfHhFT583EaSjkvmIdRw0nxZFJ2yaKCceZbD6FDQ/viewform" })
                 });
 
                 if (!response.ok) throw new Error("ไม่สามารถสร้าง QR Code ได้");
 
                 const data = await response.json();
-                const qrCodeUrl = data.qr_url;
-
-                // แสดง QR Code
-                const qrCodeImg = document.getElementById("qrcode-img");
-                qrCodeImg.src = qrCodeUrl;
+                return data.qr_url; // รับ URL ของ QR Code ใหม่
             } catch (error) {
                 console.error("Error fetching QR Code:", error);
                 alert("เกิดข้อผิดพลาดในการสร้าง QR Code");
+                return null;
+            }
+        }
+
+        async function refreshQRCode() {
+            const qrUrl = await fetchQRCode();
+            if (qrUrl) {
+                QRCode.toDataURL(qrUrl, (error, dataUrl) => {
+                    if (error) {
+                        console.error("เกิดข้อผิดพลาดในการสร้าง QR Code:", error);
+                        document.getElementById("qrcode-img").alt = "ไม่สามารถโหลด QR Code ได้";
+                    } else {
+                        document.getElementById("qrcode-img").src = dataUrl;
+                        console.log("QR Code สร้างเรียบร้อย");
+                    }
+                });
             }
         }
 
@@ -129,16 +141,16 @@ INDEX_HTML = """
 
                 if (countdown <= 0) {
                     clearInterval(interval);
-                    countdown = REFRESH_INTERVAL;
-                    fetchQRCode();
-                    startCountdown();
+                    countdown = REFRESH_INTERVAL; // รีเซ็ตเวลานับถอยหลัง
+                    refreshQRCode(); // รีเฟรช QR Code ใหม่
+                    startCountdown(); // เริ่มต้นการนับถอยหลังใหม่
                 }
             }, 1000);
         }
 
-        fetchQRCode();
-        startCountdown();
-        setInterval(updateDatetime, 1000);
+        refreshQRCode(); // สร้าง QR Code ทันทีเมื่อเปิดหน้าเว็บ
+        startCountdown(); // เริ่มต้นการนับถอยหลัง
+        setInterval(updateDatetime, 1000); // อัพเดตเวลาไทยทุกวินาที
     </script>
 </body>
 </html>
